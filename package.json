@@ -1,0 +1,23 @@
+{
+  "name": "chessGame",
+  "version": "1.0.0",
+  "description": "Ever wanted to play chess online? Yeah, me neither..",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DerpingSniper/chessGame.git"
+  },
+  "author": "Corbin Smith",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DerpingSniper/chessGame/issues"
+  },
+  "homepage": "https://github.com/DerpingSniper/chessGame",
+  "dependencies": {
+    "express": "^4.12.2",
+    "socket.io": "^1.3.5"
+  }
+}

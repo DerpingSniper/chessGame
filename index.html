@@ -1,9 +1,101 @@
 <!DOCTYPE HTML>
 <HTML>
     <HEAD>
-    
+        <title>chessNode</title>
+        
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        
+        <script>
+            var socket = io.connect();
+            
+            //Globals
+            BOARD_W = 900;
+            BOARD_H = 900;
+            SQUARE_W = 100;
+            SQUARE_H = 100;
+            SCORE_W = 200;
+            SCORE_H = 900;
+            
+            var board;
+            var boardCtx;
+            
+            var score;
+            var scoreCtx;
+            
+            jQuery(function($){
+                $('#setNick').submit(function(e){
+                    e.preventDefault();
+                    socket.emit('login', $('#nickname').val(), function(data){
+                        if(data) {
+                            $('#nickWrap').hide();
+                            $('#contentWrap').show();
+                            init();
+                        } else if (data.nick) {
+                            $('#nickError').html("Something's wrong here. Someone may already be using that username or that color.");
+                        }
+                    });
+                    $('#nickname').val('');
+                });
+                socket.on('usernames', function(data) {});
+            });
+            
+            function init() {
+                board = document.getElementById("board");
+                board.width = BOARD_W;
+                board.height = BOARD_H;
+                boardCtx = board.getContext("2d");
+                
+                score = document.getElementById("scores");
+                score.width = SCORE_W;
+                score.height = SCORE_H;
+                scoreCtx = score.getContext("2d");
+                
+                boardCtx.fillStyle = "brown";
+                boardCtx.fillRect(0, 0, BOARD_W, BOARD_H);
+                boardCtx.clearRect(50, 50, SQUARE_W*8, SQUARE_H*8);
+                
+                // !!!TEMPORARY!!!
+                boardCtx.fillStyle = "white";
+                for (var i=0 i <= 8; i++){
+                    if (i % 2 != 0){
+                        boardCtx.fillRect(i*SQUARE_W+50, SQUARE_H+50, SQUARE_W, SQUARE_H);
+                    }
+                }
+            }
+        </script>
+        
+        <style>    
+            #scores {
+                margin-left: -5px;
+            }
+            
+            body {
+                
+            }
+            
+            canvas {
+                background-color: #000;
+                margin: 0;
+                padding: 0;
+            }
+        </style>
     </HEAD>
     <BODY>
-    
+        <div id="nickWrap" style="margin:50px;">
+            <p>Enter a username:</p>
+            <p id="nickError"></p>
+            <form id="setNick">
+            <input style="width:150px;" id="nickname">
+            <input type="submit">
+            </form>
+        </div>
+        
+        <div id="contentWrap" style="display:none;">
+            <center>
+                <canvas id=board></canvas>
+                <canvas id=scores></canvas>
+            </center>
+        </div>
     </BODY>
 </HTML>
