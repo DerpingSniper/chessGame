@@ -1,15 +1,19 @@
 var express = require('express');
-var app = express();
-var server = require('http').createServer(app);
-var io = require('socket.io').listen(server);
+var app     = express();
+var server  = require('http').createServer(app);
+var io      = require('socket.io').listen(server);
 
 var player = require('./player.js');
+var piece  = require('./newPiece.js');
+console.log(piece);
 
 //Globals
-users = {};
+users   = {};
 players = {};
 
 server.listen(3000);
+
+app.use(express.static(__dirname + '/img'));
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');

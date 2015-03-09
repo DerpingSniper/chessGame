@@ -23,6 +23,49 @@
             var score;
             var scoreCtx;
             
+            //Images
+            var pieces = {
+                pawns: {
+                    w: new Image(),
+                    b: new Image()
+                },
+                rooks: {
+                    w: new Image(),
+                    b: new Image()
+                },
+                bishops: {
+                    w: new Image(),
+                    b: new Image()
+                },
+                kings: {
+                    w: new Image(),
+                    b: new Image()
+                },
+                queens: {
+                    w: new Image(),
+                    b: new Image()
+                }
+            }
+            pieces.pawns.w.src = "wPawn.png";
+            pieces.pawns.b.src = "bPawn.png";
+            pieces.rooks.w.src = "wRook.png";
+            pieces.rooks.b.src = "bRook.png";
+            pieces.bishops.w.src = "wBishop.png";
+            pieces.bishops.b.src = "bBishop.png";
+            pieces.kings.w.src = "wKing.png";
+            pieces.kings.b.src = "bKing.png";
+            pieces.queens.w.src = "wQueen.png";
+            pieces.queens.b.src = "bQueen.png";
+            
+            var wood   = new Image();
+            wood.src   = "wood.png";
+            var sBoard = new Image();
+            sBoard.src = "scoreBoard.png";
+            var bTile  = new Image();
+            bTile.src  = "bTile.png";
+            var wTile  = new Image();
+            wTile.src  = "wTile.png";
+            
             jQuery(function($){
                 $('#setNick').submit(function(e){
                     e.preventDefault();
@@ -32,7 +75,7 @@
                             $('#contentWrap').show();
                             init();
                         } else if (data.nick) {
-                            $('#nickError').html("Something's wrong here. Someone may already be using that username or that color.");
+                            $('#nickError').html("Something's wrong here. Someone may already be using that username.");
                         }
                     });
                     $('#nickname').val('');
@@ -51,17 +94,41 @@
                 score.height = SCORE_H;
                 scoreCtx = score.getContext("2d");
                 
-                boardCtx.fillStyle = "brown";
-                boardCtx.fillRect(0, 0, BOARD_W, BOARD_H);
-                boardCtx.clearRect(50, 50, SQUARE_W*8, SQUARE_H*8);
+                boardCtx.drawImage(wood, 0, 0, BOARD_W, BOARD_H);
                 
-                // !!!TEMPORARY!!!
-                boardCtx.fillStyle = "white";
-                for (var i=0 i <= 8; i++){
-                    if (i % 2 != 0){
-                        boardCtx.fillRect(i*SQUARE_W+50, SQUARE_H+50, SQUARE_W, SQUARE_H);
+                drawBoard();
+               drawScores();
+                    setUp();
+            }
+
+            function drawBoard() {
+                boardCtx.clearRect(50, 50, SQUARE_W*8, SQUARE_H*8);
+
+                for (var r=0; r < 8; r++) {
+                    for (var c = 0; c < 8; c++){
+                        if ((r + c) % 2 == 0){
+                            boardCtx.drawImage(wTile, c*SQUARE_W+50, r*SQUARE_H+50, SQUARE_W, SQUARE_H);
+                        } else {
+                            boardCtx.drawImage(bTile, c*SQUARE_W+50, r*SQUARE_H+50, SQUARE_W, SQUARE_H);
+                        }
                     }
                 }
+            }
+            
+            function setUp() {
+                var oP = onBoard.pawns;
+                for (var c = 0; c < 8; c++) {
+                    oP[oP.length] = {
+                        color: white,
+                        type: pawn,
+                        posNum: c,
+                        posLet: c
+                    };
+                }
+            }
+
+            function drawScores() {
+                scoreCtx.drawImage(sBoard, 0, 0, SCORE_W, SCORE_H);
             }
         </script>
         
@@ -71,11 +138,11 @@
             }
             
             body {
-                
+                background-color: #666666;
             }
             
             canvas {
-                background-color: #000;
+                background-color: #FFF;
                 margin: 0;
                 padding: 0;
             }
