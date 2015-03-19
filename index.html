@@ -5,6 +5,7 @@
         
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
+        <script src="piece.js"></script>
         
         <script>
             var socket = io.connect();
@@ -16,46 +17,53 @@
             SQUARE_H = 100;
             SCORE_W = 200;
             SCORE_H = 900;
+            boardObj = [];
+            selected = null;
             
-            var board;
-            var boardCtx;
-            
-            var score;
-            var scoreCtx;
+            var board,
+                boardCtx,
+                score,
+                scoreCtx;
             
             //Images
             var pieces = {
-                pawns: {
+                pawn: {
                     w: new Image(),
                     b: new Image()
                 },
-                rooks: {
+                rook: {
                     w: new Image(),
                     b: new Image()
                 },
-                bishops: {
+                knight: {
+                    w: new Image(),
+                    b: new Image() 
+                },
+                bishop: {
                     w: new Image(),
                     b: new Image()
                 },
-                kings: {
+                king: {
                     w: new Image(),
                     b: new Image()
                 },
-                queens: {
+                queen: {
                     w: new Image(),
                     b: new Image()
                 }
             }
-            pieces.pawns.w.src = "wPawn.png";
-            pieces.pawns.b.src = "bPawn.png";
-            pieces.rooks.w.src = "wRook.png";
-            pieces.rooks.b.src = "bRook.png";
-            pieces.bishops.w.src = "wBishop.png";
-            pieces.bishops.b.src = "bBishop.png";
-            pieces.kings.w.src = "wKing.png";
-            pieces.kings.b.src = "bKing.png";
-            pieces.queens.w.src = "wQueen.png";
-            pieces.queens.b.src = "bQueen.png";
+            pieces.pawn.w.src   = "wPawn.png";
+            pieces.pawn.b.src   = "bPawn.png";
+            pieces.rook.w.src   = "wRook.png";
+            pieces.rook.b.src   = "bRook.png";
+            pieces.knight.w.src = "wKnight.png";
+            pieces.knight.b.src = "bKnight.png";
+            pieces.bishop.w.src = "wBishop.png";
+            pieces.bishop.b.src = "bBishop.png";
+            pieces.king.w.src   = "wKing.png";
+            pieces.king.b.src   = "bKing.png";
+            pieces.queen.w.src  = "wQueen.png";
+            pieces.queen.b.src  = "bQueen.png";
             
             var wood   = new Image();
             wood.src   = "wood.png";
@@ -65,6 +73,8 @@
             bTile.src  = "bTile.png";
             var wTile  = new Image();
             wTile.src  = "wTile.png";
+            var high   = new Image();
+            high.src   = "highlight.png";
             
             jQuery(function($){
                 $('#setNick').submit(function(e){
@@ -73,7 +83,7 @@
                         if(data) {
                             $('#nickWrap').hide();
                             $('#contentWrap').show();
-                            init();
+                            init(data);
                         } else if (data.nick) {
                             $('#nickError').html("Something's wrong here. Someone may already be using that username.");
                         }
@@ -83,27 +93,89 @@
                 socket.on('usernames', function(data) {});
             });
             
-            function init() {
+            function init(data) {              
                 board = document.getElementById("board");
                 board.width = BOARD_W;
                 board.height = BOARD_H;
+                rect = board.getBoundingClientRect();
+                
                 boardCtx = board.getContext("2d");
                 
+                $("#board").click(function(e) {
+                    var x = e.clientX - rect.left - 50;
+                    var y = e.clientY - rect.top - 50;
+                    click(x, y);
+                });
+                
                 score = document.getElementById("scores");
+                scoreCtx = score.getContext("2d");
                 score.width = SCORE_W;
                 score.height = SCORE_H;
-                scoreCtx = score.getContext("2d");
                 
                 boardCtx.drawImage(wood, 0, 0, BOARD_W, BOARD_H);
                 
+                scoreCtx.drawImage(sBoard, 0, 0, SCORE_W, SCORE_H);
+                
+                for (var x = 0; x < data.length; x++) {
+                    boardObj[x] = [];
+                    for (var y = 0; y < data[x].length; y++) {
+                        if (data[x][y]) {
+                            boardObj[x][y] = new piece(data[x][y].color, data[x][y].piece, x, y);
+                        } else {
+                            boardObj[x][y] = null;
+                        }
+                    }
+                }
+                
                 drawBoard();
-               drawScores();
-                    setUp();
+                drawPieces();
             }
-
+            
+            //Input functions
+            function click(x, y) {
+                this.x = Math.ceil(x/100);
+                this.y = Math.ceil(y/100);
+                
+                var p = boardObj[this.x-1][this.y-1];
+                var active = checkActive();
+                console.log(active);
+                
+                if (active) {
+                    p.type = active.type;
+                    p.color = active.color;
+                    p.active = false;
+                    
+                    if (p != active) {
+                        active.active = false;
+                        active.type = null;
+                        active.color = null;
+                    }
+                    drawBoard();
+                    drawPieces();
+                } else {
+                    if(p.type) {
+                        p.active = true;
+                        console.log(p);
+                        drawHighlight(p);
+                    }
+                }
+            }
+            
+            //Game functions
+            function checkActive() {
+                for (var x = 0; x < boardObj.length; x++) {
+                    for (var y = 0; y < boardObj[x].length; y++) {
+                        if (boardObj[x][y] && boardObj[x][y].active) {
+                            return boardObj[x][y];
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            //Draw functions
             function drawBoard() {
-                boardCtx.clearRect(50, 50, SQUARE_W*8, SQUARE_H*8);
-
+                boardCtx.clearRect(50, 50, BOARD_W-100, BOARD_H-100);
                 for (var r=0; r < 8; r++) {
                     for (var c = 0; c < 8; c++){
                         if ((r + c) % 2 == 0){
@@ -115,21 +187,24 @@
                 }
             }
             
-            function setUp() {
-                var oP = onBoard.pawns;
-                for (var c = 0; c < 8; c++) {
-                    oP[oP.length] = {
-                        color: white,
-                        type: pawn,
-                        posNum: c,
-                        posLet: c
-                    };
+            function drawPieces() {
+                var drawPath;
+                var pathData;
+                for (var x = 0; x < boardObj.length; x++) {
+                    for (var y = 0; y < boardObj[x].length; y++) {
+                        if (boardObj[x][y] && boardObj[x][y].type) {
+                            drawPath = pieces[boardObj[x][y].type][boardObj[x][y].color];
+                            boardCtx.drawImage(drawPath, x*SQUARE_W+50, y*SQUARE_H+50, SQUARE_W, SQUARE_H);
+                        }
+                    }
                 }
             }
-
-            function drawScores() {
-                scoreCtx.drawImage(sBoard, 0, 0, SCORE_W, SCORE_H);
+            
+            function drawHighlight(p) {
+                console.log(p);
+                boardCtx.drawImage(high, p.x, p.y);
             }
+
         </script>
         
         <style>    
@@ -153,16 +228,14 @@
             <p>Enter a username:</p>
             <p id="nickError"></p>
             <form id="setNick">
-            <input style="width:150px;" id="nickname">
-            <input type="submit">
+                <input style="width:150px;" id="nickname">
+                <input type="submit">
             </form>
         </div>
         
         <div id="contentWrap" style="display:none;">
-            <center>
                 <canvas id=board></canvas>
                 <canvas id=scores></canvas>
-            </center>
         </div>
     </BODY>
 </HTML>

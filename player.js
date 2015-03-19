@@ -1,3 +1,6 @@
-module.exports = function(nickname){
-    this.nickname = nickname;
+module.exports = function(n, w, l, t){
+    this.nickname = n;
+    this.wins = w;
+    this.losses = l;
+    this.ties = t;
 };

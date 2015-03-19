@@ -1,0 +1,10 @@
+[ 
+    [{"piece": "rook", "color": "b"}  , {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "rook"   , "color": "w"}],
+    [{"piece": "knight", "color": "b"}, {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "knight" , "color": "w"}],
+    [{"piece": "bishop", "color": "b"}, {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "bishop" , "color": "w"}],
+    [{"piece": "queen", "color": "b"} , {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "queen"  , "color": "w"}],
+    [{"piece": "king", "color": "b"}  , {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "king"   , "color": "w"}],
+    [{"piece": "bishop", "color": "b"}, {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "bishop" , "color": "w"}],
+    [{"piece": "knight", "color": "b"}, {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "knight" , "color": "w"}],
+    [{"piece": "rook", "color": "b"}  , {"piece": "pawn", "color": "b"}, {}, {}, {}, {}, {"piece": "pawn", "color": "w"}, {"piece": "rook"   , "color": "w"}]
+]
