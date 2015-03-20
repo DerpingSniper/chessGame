@@ -11,3 +11,7 @@ var piece = function(col, typ, x, y) {
         boardObj[x][y] = null;
     }
 };
+
+var pawn = function(color, typ, x, y) {
+    
+}

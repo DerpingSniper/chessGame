@@ -4,6 +4,8 @@
         <title>chessNode</title>
         
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="piece.js"></script>
         
@@ -18,7 +20,6 @@
             SCORE_W = 200;
             SCORE_H = 900;
             boardObj = [];
-            selected = null;
             
             var board,
                 boardCtx,
@@ -150,6 +151,7 @@
                         active.type = null;
                         active.color = null;
                     }
+                    
                     drawBoard();
                     drawPieces();
                 } else {
@@ -201,8 +203,11 @@
             }
             
             function drawHighlight(p) {
-                console.log(p);
                 boardCtx.drawImage(high, p.x, p.y);
+            }
+            
+            function drawTakenPieces() {
+                
             }
 
         </script>
@@ -210,6 +215,10 @@
         <style>    
             #scores {
                 margin-left: -5px;
+            }
+            
+            #board {
+                margin-left: 10px;
             }
             
             body {
