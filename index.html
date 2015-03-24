@@ -19,7 +19,8 @@
             SQUARE_H = 100;
             SCORE_W = 200;
             SCORE_H = 900;
-            boardObj = [];
+            boardArray = [];
+            active = null;
             
             var board,
                 boardCtx,
@@ -118,12 +119,12 @@
                 scoreCtx.drawImage(sBoard, 0, 0, SCORE_W, SCORE_H);
                 
                 for (var x = 0; x < data.length; x++) {
-                    boardObj[x] = [];
+                    boardArray[x] = [];
                     for (var y = 0; y < data[x].length; y++) {
                         if (data[x][y]) {
-                            boardObj[x][y] = new piece(data[x][y].color, data[x][y].piece, x, y);
+                            boardArray[x][y] = new piece(data[x][y].color, data[x][y].piece, x, y);
                         } else {
-                            boardObj[x][y] = null;
+                            boardArray[x][y] = null;
                         }
                     }
                 }
@@ -134,45 +135,25 @@
             
             //Input functions
             function click(x, y) {
-                this.x = Math.ceil(x/100);
-                this.y = Math.ceil(y/100);
-                
-                var p = boardObj[this.x-1][this.y-1];
-                var active = checkActive();
-                console.log(active);
-                
+                x = Math.floor(x/SQUARE_W);
+                y = Math.floor(y/SQUARE_H);
+                                
                 if (active) {
-                    p.type = active.type;
-                    p.color = active.color;
-                    p.active = false;
-                    
-                    if (p != active) {
-                        active.active = false;
-                        active.type = null;
-                        active.color = null;
+                    boardArray[active.x][active.y].active = false;
+                    if(active.x != x || active.y != y) {
+                        boardArray[active.x][active.y].move(x, y);
                     }
-                    
-                    drawBoard();
-                    drawPieces();
-                } else {
-                    if(p.type) {
-                        p.active = true;
-                        console.log(p);
-                        drawHighlight(p);
-                    }
+                    active = null;
+                } else if (boardArray[x][y]) {
+                    active = {
+                        x: x,
+                        y: y
+                    };
+                    boardArray[x][y].active = true;
                 }
-            }
-            
-            //Game functions
-            function checkActive() {
-                for (var x = 0; x < boardObj.length; x++) {
-                    for (var y = 0; y < boardObj[x].length; y++) {
-                        if (boardObj[x][y] && boardObj[x][y].active) {
-                            return boardObj[x][y];
-                        }
-                    }
-                }
-                return false;
+                drawBoard();
+                drawPieces();
+                drawHighlight();
             }
             
             //Draw functions
@@ -192,18 +173,20 @@
             function drawPieces() {
                 var drawPath;
                 var pathData;
-                for (var x = 0; x < boardObj.length; x++) {
-                    for (var y = 0; y < boardObj[x].length; y++) {
-                        if (boardObj[x][y] && boardObj[x][y].type) {
-                            drawPath = pieces[boardObj[x][y].type][boardObj[x][y].color];
+                for (var x = 0; x < boardArray.length; x++) {
+                    for (var y = 0; y < boardArray[x].length; y++) {
+                        if (boardArray[x][y]) {
+                            drawPath = pieces[boardArray[x][y].type][boardArray[x][y].color];
                             boardCtx.drawImage(drawPath, x*SQUARE_W+50, y*SQUARE_H+50, SQUARE_W, SQUARE_H);
                         }
                     }
                 }
             }
             
-            function drawHighlight(p) {
-                boardCtx.drawImage(high, p.x, p.y);
+            function drawHighlight() {
+                if(active){
+                    boardCtx.drawImage(high, active.x*SQUARE_W+50, active.y*SQUARE_H+50);
+                }
             }
             
             function drawTakenPieces() {
@@ -225,6 +208,10 @@
                 background-color: #666666;
             }
             
+            h2 {
+                color: aliceblue;
+            }
+            
             canvas {
                 background-color: #FFF;
                 margin: 0;
@@ -233,13 +220,15 @@
         </style>
     </HEAD>
     <BODY>
-        <div id="nickWrap" style="margin:50px;">
-            <p>Enter a username:</p>
-            <p id="nickError"></p>
-            <form id="setNick">
-                <input style="width:150px;" id="nickname">
-                <input type="submit">
-            </form>
+        <div class="container">
+            <div id="nickWrap" style="margin:50px;">
+                <h2>Enter a username:</h2>
+                <p id="nickError"></p>
+                <form id="setNick">
+                    <input style="width:150px;" id="nickname">
+                    <input type="submit">
+                </form>
+            </div>
         </div>
         
         <div id="contentWrap" style="display:none;">
