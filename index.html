@@ -1,239 +1,205 @@
 <!DOCTYPE HTML>
 <HTML>
-    <HEAD>
-        <title>chessNode</title>
-        
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="piece.js"></script>
-        
-        <script>
-            var socket = io.connect();
-            
-            //Globals
-            BOARD_W = 900;
-            BOARD_H = 900;
-            SQUARE_W = 100;
-            SQUARE_H = 100;
-            SCORE_W = 200;
-            SCORE_H = 900;
-            boardArray = [];
-            active = null;
-            
-            var board,
-                boardCtx,
-                score,
-                scoreCtx;
-            
-            //Images
-            var pieces = {
-                pawn: {
-                    w: new Image(),
-                    b: new Image()
-                },
-                rook: {
-                    w: new Image(),
-                    b: new Image()
-                },
-                knight: {
-                    w: new Image(),
-                    b: new Image() 
-                },
-                bishop: {
-                    w: new Image(),
-                    b: new Image()
-                },
-                king: {
-                    w: new Image(),
-                    b: new Image()
-                },
-                queen: {
-                    w: new Image(),
-                    b: new Image()
-                }
-            }
-            pieces.pawn.w.src   = "wPawn.png";
-            pieces.pawn.b.src   = "bPawn.png";
-            pieces.rook.w.src   = "wRook.png";
-            pieces.rook.b.src   = "bRook.png";
-            pieces.knight.w.src = "wKnight.png";
-            pieces.knight.b.src = "bKnight.png";
-            pieces.bishop.w.src = "wBishop.png";
-            pieces.bishop.b.src = "bBishop.png";
-            pieces.king.w.src   = "wKing.png";
-            pieces.king.b.src   = "bKing.png";
-            pieces.queen.w.src  = "wQueen.png";
-            pieces.queen.b.src  = "bQueen.png";
-            
-            var wood   = new Image();
-            wood.src   = "wood.png";
-            var sBoard = new Image();
-            sBoard.src = "scoreBoard.png";
-            var bTile  = new Image();
-            bTile.src  = "bTile.png";
-            var wTile  = new Image();
-            wTile.src  = "wTile.png";
-            var high   = new Image();
-            high.src   = "highlight.png";
-            
-            jQuery(function($){
-                $('#setNick').submit(function(e){
-                    e.preventDefault();
-                    socket.emit('login', $('#nickname').val(), function(data){
-                        if(data) {
-                            $('#nickWrap').hide();
-                            $('#contentWrap').show();
-                            init(data);
-                        } else if (data.nick) {
-                            $('#nickError').html("Something's wrong here. Someone may already be using that username.");
-                        }
-                    });
-                    $('#nickname').val('');
-                });
-                socket.on('usernames', function(data) {});
-            });
-            
-            function init(data) {              
-                board = document.getElementById("board");
-                board.width = BOARD_W;
-                board.height = BOARD_H;
-                rect = board.getBoundingClientRect();
-                
-                boardCtx = board.getContext("2d");
-                
-                $("#board").click(function(e) {
-                    var x = e.clientX - rect.left - 50;
-                    var y = e.clientY - rect.top - 50;
-                    click(x, y);
-                });
-                
-                score = document.getElementById("scores");
-                scoreCtx = score.getContext("2d");
-                score.width = SCORE_W;
-                score.height = SCORE_H;
-                
-                boardCtx.drawImage(wood, 0, 0, BOARD_W, BOARD_H);
-                
-                scoreCtx.drawImage(sBoard, 0, 0, SCORE_W, SCORE_H);
-                
-                for (var x = 0; x < data.length; x++) {
-                    boardArray[x] = [];
-                    for (var y = 0; y < data[x].length; y++) {
-                        if (data[x][y]) {
-                            boardArray[x][y] = new piece(data[x][y].color, data[x][y].piece, x, y);
-                        } else {
-                            boardArray[x][y] = null;
-                        }
-                    }
-                }
-                
-                drawBoard();
-                drawPieces();
-            }
-            
-            //Input functions
-            function click(x, y) {
-                x = Math.floor(x/SQUARE_W);
-                y = Math.floor(y/SQUARE_H);
-                                
-                if (active) {
-                    boardArray[active.x][active.y].active = false;
-                    if(active.x != x || active.y != y) {
-                        boardArray[active.x][active.y].move(x, y);
-                    }
-                    active = null;
-                } else if (boardArray[x][y]) {
-                    active = {
-                        x: x,
-                        y: y
-                    };
-                    boardArray[x][y].active = true;
-                }
-                drawBoard();
-                drawPieces();
-                drawHighlight();
-            }
-            
-            //Draw functions
-            function drawBoard() {
-                boardCtx.clearRect(50, 50, BOARD_W-100, BOARD_H-100);
-                for (var r=0; r < 8; r++) {
-                    for (var c = 0; c < 8; c++){
-                        if ((r + c) % 2 == 0){
-                            boardCtx.drawImage(wTile, c*SQUARE_W+50, r*SQUARE_H+50, SQUARE_W, SQUARE_H);
-                        } else {
-                            boardCtx.drawImage(bTile, c*SQUARE_W+50, r*SQUARE_H+50, SQUARE_W, SQUARE_H);
-                        }
-                    }
-                }
-            }
-            
-            function drawPieces() {
-                var drawPath;
-                var pathData;
-                for (var x = 0; x < boardArray.length; x++) {
-                    for (var y = 0; y < boardArray[x].length; y++) {
-                        if (boardArray[x][y]) {
-                            drawPath = pieces[boardArray[x][y].type][boardArray[x][y].color];
-                            boardCtx.drawImage(drawPath, x*SQUARE_W+50, y*SQUARE_H+50, SQUARE_W, SQUARE_H);
-                        }
-                    }
-                }
-            }
-            
-            function drawHighlight() {
-                if(active){
-                    boardCtx.drawImage(high, active.x*SQUARE_W+50, active.y*SQUARE_H+50);
-                }
-            }
-            
-            function drawTakenPieces() {
-                
-            }
 
-        </script>
+<HEAD>
+    <title>chessNode</title>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="piece.js"></script>
+
+    <script>
+        var socket = io.connect();
+
+        //Globals
+        BOARD_W = 900;
+        BOARD_H = 900;
+        SQUARE_W = (BOARD_W - 100) / 8;
+        SQUARE_H = (BOARD_H - 100) / 8;
+        SCORE_W = 200;
+        SCORE_H = 900;
+        boardObj = [];
+        active = null;
+        enPassant = null;
+
+        var board,
+            boardCtx,
+            score,
+            scoreCtx;
+
+        //Images
+        var pieces = {
+            wPawn: new Image(),
+            bPawn: new Image(),
+            wRook: new Image(),
+            bRook: new Image(),
+            wKnight: new Image(),
+            bKnight: new Image(),
+            wBishop: new Image(),
+            bBishop: new Image(),
+            kKing: new Image(),
+            bKing: new Image(),
+            wQueen: new Image(),
+            bQueen: new Image()
+        }
+        pieces.wPawn.src = "wPawn.png";
+        pieces.bPawn.src = "bPawn.png";
+        pieces.wRook.src = "wRook.png";
+        pieces.bRook.src = "bRook.png";
+        pieces.wKnight.src = "wKnight.png";
+        pieces.bKnight.src = "bKnight.png";
+        pieces.wBishop.src = "wBishop.png";
+        pieces.bBishop.src = "bBishop.png";
+        pieces.wKing.src = "wKing.png";
+        pieces.bKing.src = "bKing.png";
+        pieces.wQueen.src = "wQueen.png";
+        pieces.bQueen.src = "bQueen.png";
+
+        var wood = new Image();
+        wood.src = "wood.png";
+        var bTile = new Image();
+        bTile.src = "bTile.png";
+        var wTile = new Image();
+        wTile.src = "wTile.png";
+        var high = new Image();
+        high.src = "highlight.png";
+
+        jQuery(function($) {
+            $('#setNick').submit(function(e) {
+                e.preventDefault();
+                socket.emit('login', $('#nickname').val(), function(data) {
+                    if (data) {
+                        $('#nickWrap').hide();
+                        $('#contentWrap').show();
+                        ctxInit(data);
+                    } else if (data.nick) {
+                        $('#nickError').html("Something's wrong here. Someone may already be using that username.");
+                    }
+                });
+                $('#nickname').val('');
+            });
+            socket.on('usernames', function(data) {});
+            socket.on("update", function(data) {
+                for (var d in data) {
+                    var cell = data[d];
+                    boardObj[cell.x][cell.y] = cell.value;
+                }
+            });
+        });
+
+        function ctxInit(data) {
+            board = document.getElementById("board");
+            board.width = BOARD_W;
+            board.height = BOARD_H;
+            rect = board.getBoundingClientRect();
+
+            boardCtx = board.getContext("2d");
+
+            $("#board").click(function(e) {
+                var x = e.clientX - rect.left - 50;
+                var y = e.clientY - rect.top - 50;
+                click(x, y);
+            });
+
+            boardCtx.drawImage(wood, 0, 0, BOARD_W, BOARD_H);
+            drawBoard();
+            drawPieces();
+        }
+
+        //Input functions
+        function click(x, y) {
+            x = Math.floor(x / SQUARE_W);
+            y = Math.floor(y / SQUARE_H);
+
+            if (active) {
+                if (active.x != x || active.y != y) {
+                    socket.emit("move", {
+                        x: x,
+                        y: y,
+                        ax: active.x,
+                        ay: active.y
+                    });
+                }
+                active = null;
+            } else if (boardObj[x][y]) {
+                active = {
+                    x: x,
+                    y: y
+                };
+            }
+            drawBoard();
+            drawPieces();
+            drawHighlight();
+        }
+
+        //Draw functions
+        function drawBoard() {
+            boardCtx.clearRect(50, 50, BOARD_W - 100, BOARD_H - 100);
+            for (var r = 0; r < 8; r++) {
+                for (var c = 0; c < 8; c++) {
+                    if ((r + c) % 2 == 0) {
+                        boardCtx.drawImage(wTile, c * SQUARE_W + 50, r * SQUARE_H + 50, SQUARE_W, SQUARE_H);
+                    } else {
+                        boardCtx.drawImage(bTile, c * SQUARE_W + 50, r * SQUARE_H + 50, SQUARE_W, SQUARE_H);
+                    }
+                }
+            }
+        }
+
+        function drawPieces() {
+            var drawPath;
+            var pathData;
+            for (var x = 0; x < boardObj.length; x++) {
+                for (var y = 0; y < boardObj[x].length; y++) {
+                    if (boardObj[x][y]) {
+                        drawPath = pieces[boardObj[x][y]];
+                        boardCtx.drawImage(drawPath, x * SQUARE_W + 50, y * SQUARE_H + 50, SQUARE_W, SQUARE_H);
+                    }
+                }
+            }
+        }
+
+        function drawHighlight() {
+            if (active) boardCtx.drawImage(high, active.x * SQUARE_W + 50, active.y * SQUARE_H + 50);
+        }
+
+    </script>
+
+    <style>
+        body {
+            background-color: #666666;
+        }
         
-        <style>    
-            #scores {
-                margin-left: -5px;
-            }
-            
-            #board {
-                margin-left: 10px;
-            }
-            
-            body {
-                background-color: #666666;
-            }
-            
-            h2 {
-                color: aliceblue;
-            }
-            
-            canvas {
-                background-color: #FFF;
-                margin: 0;
-                padding: 0;
-            }
-        </style>
-    </HEAD>
-    <BODY>
-        <div class="container">
-            <div id="nickWrap" style="margin:50px;">
-                <h2>Enter a username:</h2>
-                <p id="nickError"></p>
-                <form id="setNick">
-                    <input style="width:150px;" id="nickname">
-                    <input type="submit">
-                </form>
-            </div>
-        </div>
+        h2 {
+            color: aliceblue;
+        }
         
-        <div id="contentWrap" style="display:none;">
-                <canvas id=board></canvas>
-                <canvas id=scores></canvas>
+        canvas {
+            background-color: #FFF;
+            margin: 10px;
+            padding: 0;
+        }
+
+    </style>
+</HEAD>
+
+<BODY>
+    <div class="container">
+        <div id="nickWrap" style="margin:50px;">
+            <h2>Enter a username:</h2>
+            <p id="nickError"></p>
+            <form id="setNick">
+                <input style="width:150px;" id="nickname">
+                <input type="submit">
+            </form>
         </div>
-    </BODY>
+    </div>
+
+    <div id="contentWrap" style="display:none;">
+        <canvas id=board></canvas>
+    </div>
+</BODY>
+
 </HTML>
