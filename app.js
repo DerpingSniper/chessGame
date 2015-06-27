@@ -10,6 +10,7 @@ var piece = require('./piece.js');
 users = {};
 players = {};
 boardArray = [];
+turn = 0;
 MAP_FILE = "board.json";
 
 fs.readFile(MAP_FILE, 'utf8', function (err, data) {
@@ -41,30 +42,58 @@ function init() {
 }
 
 io.sockets.on('connection', function (socket) {
-    console.log("Connected");
+    console.log("User connect");
     socket.on('login', function (data, callback) {
-        console.log("Login Attempt: " + data);
+        console.log("Login: " + data);
         if (data in users) {
             callback(false);
         } else if (data) {
-            callback(boardArray);
+            var pieceList = [], 
+                x, y;
+            for (var i = 0; i < boardArray.length; i++) {
+                pieceList[i] = [];
+                for (var j = 0; j < boardArray[i].length; j++) {
+                    if(boardArray[i][j]) pieceList[i][j] = boardArray[i][j].color + boardArray[i][j].piece;
+                }
+            }
+            console.log(pieceList);
+            callback(pieceList);
             socket.nickname = data;
             users[socket.nickname] = socket;
-            players[socket.nickname] = new player(socket.nickname);
-            io.sockets.emit('usernames', Arrayect.keys(users));
+            if (players[0]) {
+                if (!players[1]) {
+                    players[1] = socket;
+                    io.sockets.emit('usernames', Object.keys(users));
+                }
+            } else {
+                players[0] = socket;
+                io.sockets.emit('usernames', Object.keys(users));
+            }
         } else {
             callback(false);
         }
     });
     socket.on("move", function (data) {
-        var success = boardArray[data.x][data.y].move(data.ax, data.ay);
-        if (success)
+        console.log("Move");
+        if (players[turn] == socket) {
+            var success = boardArray[data.ax][data.ay].move(data.x, data.y);
+            if (success) {
+                var x, y;
+                for (var i = 0; i < success.length; i++) {
+                    x = success[i].x;
+                    y = success[i].y;
+                    success[i].value = boardArray[x][y].color + boardArray[x][y].piece;
+                }
+                socket.emit("update", success);
+                turn = Math.abs(turn - 1);
+            }
+        }
     });
     socket.on('disconnect', function (data) {
         if (socket.nickname) {
             delete users[socket.nickname];
             delete players[socket.nickname];
-            io.sockets.emit('usernames', Arrayect.keys(users));
+            io.sockets.emit('usernames', Object.keys(users));
         } else {
             return;
         }

@@ -8,7 +8,6 @@
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="piece.js"></script>
 
     <script>
         var socket = io.connect();
@@ -20,7 +19,7 @@
         SQUARE_H = (BOARD_H - 100) / 8;
         SCORE_W = 200;
         SCORE_H = 900;
-        boardObj = [];
+        boardArray = [];
         active = null;
         enPassant = null;
 
@@ -39,7 +38,7 @@
             bKnight: new Image(),
             wBishop: new Image(),
             bBishop: new Image(),
-            kKing: new Image(),
+            wKing: new Image(),
             bKing: new Image(),
             wQueen: new Image(),
             bQueen: new Image()
@@ -71,6 +70,7 @@
                 e.preventDefault();
                 socket.emit('login', $('#nickname').val(), function(data) {
                     if (data) {
+                        console.log(data);
                         $('#nickWrap').hide();
                         $('#contentWrap').show();
                         ctxInit(data);
@@ -84,12 +84,13 @@
             socket.on("update", function(data) {
                 for (var d in data) {
                     var cell = data[d];
-                    boardObj[cell.x][cell.y] = cell.value;
+                    boardArray[cell.x][cell.y] = cell.value;
                 }
             });
         });
 
         function ctxInit(data) {
+            boardArray = data;
             board = document.getElementById("board");
             board.width = BOARD_W;
             board.height = BOARD_H;
@@ -123,7 +124,7 @@
                     });
                 }
                 active = null;
-            } else if (boardObj[x][y]) {
+            } else if (boardArray[x][y]) {
                 active = {
                     x: x,
                     y: y
@@ -151,10 +152,10 @@
         function drawPieces() {
             var drawPath;
             var pathData;
-            for (var x = 0; x < boardObj.length; x++) {
-                for (var y = 0; y < boardObj[x].length; y++) {
-                    if (boardObj[x][y]) {
-                        drawPath = pieces[boardObj[x][y]];
+            for (var x = 0; x < boardArray.length; x++) {
+                for (var y = 0; y < boardArray[x].length; y++) {
+                    if (boardArray[x][y]) {
+                        drawPath = pieces[boardArray[x][y]];
                         boardCtx.drawImage(drawPath, x * SQUARE_W + 50, y * SQUARE_H + 50, SQUARE_W, SQUARE_H);
                     }
                 }
@@ -173,7 +174,7 @@
         }
         
         h2 {
-            color: aliceblue;
+            color: white;
         }
         
         canvas {
